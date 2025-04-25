@@ -1,10 +1,22 @@
 let mathToken = [];
 let wasClicked = false;
 let operatorWasClicked = false;
+let enteredNum = false;
+let hasValue = false;
 
+//Nodes for the DOM
+const display = document.querySelector("#display");
+const operands = document.querySelectorAll(".operand");
+const clear = document.querySelector(".clear");
+const sign = document.querySelector(".sign");
+const equals = document.querySelector(".equals");
+const buttons = document.querySelectorAll("button");
+const symbols = document.querySelectorAll(".symbol");
+const decimal = document.querySelector(".decimal");
+const percent = document.querySelector(".percent");
+
+//Math functions
 function addFunction(value1, value2) {
-    console.log("value1:",value1);
-    console.log("value2:",value2);
     return (Number(value1) + Number(value2));
 }
 
@@ -17,8 +29,9 @@ function multiplyFunction(value1, value2) {
 }
 
 function divideFunction(value1, value2) {
-    return (value1 / value2).toFixed(2);
+    return (Number(value1) / Number(value2)).toFixed(2);
 }
+
 
 function operate(token) {
     let result;
@@ -26,10 +39,16 @@ function operate(token) {
     let symbol;
     let num2;
 
+
     num1 = token[0];
     symbol = token[1];
     num2 = token[2];
 
+    if(!Number.isInteger(num1) && !Number.isInteger(num2)) {
+        mathToken = [];
+        operatorWasClicked = false;
+        hasValue = false; 
+    }
 
     parseInt(num1);
     parseInt(num2);
@@ -40,40 +59,39 @@ function operate(token) {
             result = addFunction(num1,num2);
             display.textContent = result;
             mathToken = [];
+            getValue();
             operatorWasClicked = false;
+            hasValue = true;
             console.log(mathToken);
             break;
         case "/":
-            result = multiplyFunction(num1,num2);
+            result = divideFunction(num1,num2);
             display.textContent = result;
             mathToken = [];
+            getValue();
             operatorWasClicked = false;
+            hasValue = true;
             break;
         case "-":
             result = subtractFunction(num1,num2);
             display.textContent = result;
             mathToken = [];
+            getValue();
             operatorWasClicked = false;
+            hasValue = true;
             break;
         case "*":
             result = multiplyFunction(num1,num2);
             display.textContent = result;
             mathToken = [];
+            getValue();
             operatorWasClicked = false;
+            hasValue = true;
             break;
     }
 }
 
-//Nodes for the DOM
-const display = document.querySelector("#display");
-const operands = document.querySelectorAll(".operand");
-const clear = document.querySelector(".clear");
-const sign = document.querySelectorAll(".sign");
-const equals = document.querySelector(".equals");
-const buttons = document.querySelectorAll("button");
-const symbols = document.querySelectorAll(".symbol");
-const decimal = document.querySelector(".decimal");
-const percent = document.querySelector(".percent");
+
 
 
 //This is to update the max length of the display.
@@ -87,6 +105,7 @@ function updateDisplay() {
 //Handles the buttons for the numbers being displayed to the dom.
 operands.forEach((button) => {
     button.addEventListener("click", (e) => {
+        enteredNum = true;
         if (display.textContent.length >= maxLength){
             e.stopPropagation();
         } else if (display.textContent.length < maxLength) {
@@ -113,12 +132,24 @@ let addDecimal = decimal.addEventListener("click", () => {
 
 //Which symbol should be used for what operation.
 symbols.forEach((symbol) => {
-    symbol.addEventListener("click", ()=> {
-        getValue();
-        display.textContent = symbol.textContent;
-        getValue();
-        console.log("Array After symbol:",mathToken);
-        return operatorWasClicked = true;
+    symbol.addEventListener("click", (e) => {
+        if (enteredNum === false) { 
+            e.stopPropagation();
+        } else if (mathToken.length === 3) { //Calculate first 3 values. Get result, display it. Then calculate again.
+            operate(mathToken);
+            display.textContent = mathToken[0];
+            getValue();
+            operate(mathToken);
+            return operatorWasClicked = true;
+        } else if (hasValue === true) {
+            display.textContent = symbol.textContent;
+            getValue();
+            return operatorWasClicked = true;
+        } else
+            getValue();
+            display.textContent = symbol.textContent;
+            getValue();
+            return operatorWasClicked = true;
     });
 });
 
@@ -154,6 +185,16 @@ equals.addEventListener("click", (e)=> {
         getValue();
         operate(mathToken);
         wasClicked = true;
+    }
+});
+
+sign.addEventListener("click", (e)=> {
+    if (display.textContent.includes("+") || display.textContent.includes("*") || display.textContent.includes("/") || display.textContent.includes("-")){
+        e.preventDefault();
+    } else if (display.textContent.includes("+") || display.textContent.includes("*") || display.textContent.includes("/") && display.textContent.includes("-")){
+        display.textContent.replace("-","");
+    } else {
+        display.textContent = "-" + display.textContent;
     }
 });
 
